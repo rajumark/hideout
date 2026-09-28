@@ -363,6 +363,24 @@
   .hero-demo .prompt { font-family: var(--mono); color: var(--accent); }
   .hero-demo .input-row { border: 0; border-radius: 16px; box-shadow: var(--shadow); padding: 14px 18px; }
   @media (max-width: 640px) { .hero-demo { padding: 24px 18px; border-radius: 24px; } }
+  /* Hero demo: type, scan, then seal each private detail */
+  .demo-bubble { position: relative; display: block; max-width: 100%; min-height: 1.9em; margin: 14px 0 0; padding: 16px 20px; font-size: 18px; line-height: 2; }
+  .demo-bubble .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 1px; vertical-align: -0.15em; background: var(--accent); animation: caret-blink 1s steps(1) infinite; }
+  .demo-bubble .beam { position: absolute; top: 6px; bottom: 6px; left: 0; width: 3px; border-radius: 3px; background: var(--green);
+    box-shadow: 0 0 12px 3px rgba(61, 220, 132, .55), -24px 0 24px -6px rgba(61, 220, 132, .35); pointer-events: none; }
+  .demo-bubble .pii { position: relative; border-radius: 6px; transition: background-color .3s ease, color .3s ease, box-shadow .3s ease; }
+  .demo-bubble .pii.is-found { background: #fff3c4; box-shadow: 0 0 0 2px #f9ab00; }
+  .demo-bubble .pii.is-found::before { content: attr(data-type); position: absolute; left: -2px; bottom: calc(100% + 1px); padding: 1px 7px; border-radius: 6px 6px 6px 0;
+    background: #f9ab00; color: #1f1400; font: 600 10.5px/1.5 var(--mono); letter-spacing: .04em; white-space: nowrap; animation: fix-pop .3s ease; }
+  .demo-bubble .pii.is-scrambling { font-family: var(--mono); color: #b06000; }
+  .demo-bubble .pii.is-sealed { display: inline-block; padding: 0 8px; line-height: 1.6; background: var(--accent); color: #fff; box-shadow: none;
+    font: 500 15px/1.6 var(--mono); letter-spacing: .02em; animation: fix-pop .35s ease; }
+  .demo-status { display: flex; align-items: center; gap: 8px; min-height: 32px; margin-top: 16px; font-size: 14px; font-weight: 500; color: var(--accent);
+    opacity: 0; transform: translateY(6px); transition: opacity .35s ease, transform .35s ease; }
+  .demo-status.is-visible { opacity: 1; transform: none; }
+  .demo-status .dot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: var(--green-ink); font-size: 13px; }
+  @keyframes caret-blink { 50% { opacity: 0; } }
+  @keyframes fix-pop { 0% { transform: scale(.5); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
 
   /* Buttons: 48px Material pills */
   .btn { height: 48px; padding: 0 24px; border: 0; font-size: 16px; font-weight: 500; justify-content: center; transition: box-shadow .2s, background .2s; }
@@ -496,9 +514,9 @@
   </div>
   <p class="hero-trust">Free up to 10k monthly active devices · No API key · Live on JitPack</p>
   <div class="hero-demo" id="heroDemo">
-    <div class="prompt" id="demoPrompt"></div>
-    <div class="bubble" id="demoInput"></div>
-    <div class="chip-row" id="demoChips"></div>
+    <div class="prompt" id="demoPrompt">hideout.hide(message)</div>
+    <div class="bubble demo-bubble" id="demoText">Call me on <span class="pii is-sealed">[PHONE]</span>, my UPI is <span class="pii is-sealed">[UPI]</span></div>
+    <div class="demo-status" id="demoStatus" aria-live="polite"></div>
   </div>
 </header>
 
@@ -861,26 +879,100 @@ hideout.close()</code></pre>
 </script>
 
 <script>
-  // Real output from the model, rotating every 5 s: [input, output].
+  // Real output from the model: [input, output]. Typed, scanned, then each private detail is sealed.
   var DEMO = [["Call me on 98765 43210, my UPI is raju@okaxis", "Call me on [PHONE], my UPI is [UPI]"], ["Mera naam Pooja Gupta hai, aadhar 4521 8736 1292", "Mera naam [NAME] hai, aadhar [AADHAAR]"], ["मेरा नंबर 98765 43210 है", "मेरा नंबर [PHONE] है"], ["Send the documents to ananya.iyer92@gmail.com, PAN BKLPS4821K", "Send the documents to [EMAIL], PAN [PAN]"], ["Deliver to Flat 302, Sai Residency, Baner Road, Pune 411045", "Deliver to [ADDRESS]"], ["Hey Kavya! OTP is 482913, please don't share it", "Hey [NAME]! OTP is [SECRET], please don't share it"], ["Order #40512378 will arrive by Friday, costs Rs 24,999", "Order #40512378 will arrive by Friday, costs Rs 24,999"]];
   (function () {
     var demo = document.getElementById("heroDemo");
-    var i = 0;
-    function render(ex) {
-      document.getElementById("demoPrompt").textContent = 'hideout.hide("' + ex[0] + '")';
-      document.getElementById("demoInput").textContent = ex[0];
-      var chips = document.getElementById("demoChips");
-      chips.innerHTML = "";
-      var a = document.createElement("span");
-      a.className = "restored";
-      a.textContent = ex[1];
-      chips.appendChild(a);
+    var box = document.getElementById("demoText");
+    var status = document.getElementById("demoStatus");
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var GLYPHS = "█▓▒░#%&@$*";
+    function sleep(ms) { return new Promise(function (r) { window.setTimeout(r, ms); }); }
+    function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+
+    // Walk the output's literal text through the input; whatever sits where a [TAG] is becomes that tag's span.
+    function segments(input, output) {
+      var parts = output.split(/\[([A-Z_]+)\]/), segs = [], pos = 0;
+      for (var k = 0; k < parts.length; k += 2) {
+        if (k > 0) {
+          var end = parts[k] ? input.indexOf(parts[k], pos) : input.length;
+          segs.push({ tag: parts[k - 1], text: input.slice(pos, end) });
+          pos = end;
+        }
+        if (parts[k]) segs.push({ text: parts[k] });
+        pos += parts[k].length;
+      }
+      return segs;
     }
-    render(DEMO[0]);
-    window.setInterval(function () {
-      demo.classList.add("is-fading");
-      window.setTimeout(function () { i = (i + 1) % DEMO.length; render(DEMO[i]); demo.classList.remove("is-fading"); }, 350);
-    }, 5000);
+    function setStatus(icon, text) {
+      status.textContent = "";
+      var dot = el("span", "dot");
+      dot.innerHTML = icon === "lock"
+        ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+        : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7.5"/></svg>';
+      status.appendChild(dot); status.appendChild(el("span", "", text));
+      status.classList.add("is-visible");
+    }
+    async function scramble(node, ms) {
+      var n = Array.from(node.textContent).length;
+      node.classList.add("is-scrambling");
+      for (var t = 0; t < ms; t += 55) {
+        var s = "";
+        for (var j = 0; j < n; j++) s += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+        node.textContent = s;
+        await sleep(55);
+      }
+    }
+    async function play(ex) {
+      box.textContent = ""; status.classList.remove("is-visible");
+      var typed = document.createTextNode(""), caret = el("span", "caret");
+      box.appendChild(typed); box.appendChild(caret);
+      var chars = Array.from(ex[0]);
+      for (var i = 0; i < chars.length; i++) {
+        typed.data += chars[i];
+        await sleep(chars[i] === " " ? 80 : 32 + Math.random() * 40);
+      }
+      await sleep(500);
+
+      // Swap plain text for spans that render identically, then sweep the scanner across.
+      box.textContent = "";
+      var found = [];
+      segments(ex[0], ex[1]).forEach(function (seg) {
+        if (!seg.tag) { box.appendChild(document.createTextNode(seg.text)); return; }
+        var span = el("span", "pii", seg.text);
+        span.setAttribute("data-type", seg.tag);
+        box.appendChild(span); found.push(span);
+      });
+      var beam = el("span", "beam"), width = box.clientWidth, sweep = 1100;
+      box.appendChild(beam);
+      found.forEach(function (span) {
+        var at = (span.offsetLeft / width) * sweep;
+        window.setTimeout(function () { span.classList.add("is-found"); }, at);
+      });
+      beam.animate([{ transform: "translateX(0)", opacity: 1 }, { transform: "translateX(" + (width - 3) + "px)", opacity: 1 }, { transform: "translateX(" + (width - 3) + "px)", opacity: 0 }],
+                   { duration: sweep + 250, easing: "ease-in-out", fill: "forwards" });
+      await sleep(sweep + 450);
+      beam.remove();
+
+      if (!found.length) {
+        setStatus("check", "Nothing personal. Order ID and price stay visible.");
+      } else {
+        for (var k = 0; k < found.length; k++) {
+          var span = found[k];
+          await scramble(span, 420);
+          span.classList.remove("is-found", "is-scrambling");
+          span.textContent = "[" + span.getAttribute("data-type") + "]";
+          span.classList.add("is-sealed");
+          await sleep(320);
+        }
+        setStatus("lock", found.length + (found.length === 1 ? " detail" : " details") + " hidden · never left the phone");
+      }
+      await sleep(3000);
+      demo.classList.add("is-fading"); await sleep(380);
+      box.textContent = ""; status.classList.remove("is-visible"); demo.classList.remove("is-fading");
+      await sleep(300);
+    }
+    (async function loop() { var i = 0; for (;;) { await play(DEMO[i]); i = (i + 1) % DEMO.length; } })();
   })();
 </script>
 </body>
