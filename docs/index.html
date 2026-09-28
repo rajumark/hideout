@@ -331,6 +331,16 @@
   .verdict.bad { color:#d1242f; border-color:#d1242f; }
   .verdict.score { color: var(--text-secondary); }
   .chip-row .restored { font-size: 17px; font-weight: 500; color: var(--accent); }
+
+  /* App ideas */
+  .idea-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+  .idea {
+    display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px;
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+  }
+  .idea .emo { font-size: 22px; line-height: 1.2; flex: none; }
+  .idea p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--text-secondary); }
+  .idea p b { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -346,6 +356,7 @@
       <a href="#install">Install</a>
       <a href="#usage">Usage</a>
       <a href="#quality">Quality</a>
+      <a href="#ideas">Ideas</a>
       <a href="#api">API</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
@@ -534,6 +545,36 @@ hideout.close()</code></pre>
       <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg></div>
       <div><h4>Screenshots &amp; sharing</h4><p>Blur OTPs, passwords and addresses in text you are about to share or show on screen.</p><code class="example">"OTP is 482913" → OTP is ******</code></div>
     </div>
+  </div>
+</section>
+
+<section id="ideas">
+  <div class="section-head">
+    <div class="kicker">App ideas</div>
+    <h2>20 apps you could build with Hideout</h2>
+    <p>Real problems Hideout solves today. Pick one and ship it.</p>
+  </div>
+  <div class="idea-list">
+    <div class="idea"><span class="emo" aria-hidden="true">💞</span><p><b>Dating apps</b> · Stop users sharing phone numbers or Instagram handles in the first messages.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🛒</span><p><b>Marketplace chat</b> · Keep deals on your platform by blocking phone numbers and UPI IDs in chat.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🤖</span><p><b>Safe LLM prompts</b> · Strip personal details on the phone, then send only safe text to an AI model.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🎧</span><p><b>Support chat logs</b> · Mask Aadhaar, PAN and card numbers before a message is saved or logged.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🐞</span><p><b>Crash &amp; bug reports</b> · Scrub personal info from logs and bug reports before they are uploaded.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">📸</span><p><b>Safe screenshots</b> · Blur OTPs, card numbers and addresses before a user shares a screenshot.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🔐</span><p><b>OTP leak warning</b> · Warn "Never share your OTP" before a user sends one in chat.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">📋</span><p><b>Clipboard guard</b> · Alert users when they copy an Aadhaar or card number.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🖥️</span><p><b>Screen-share mode</b> · Hide personal details on screen while presenting or streaming.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🏦</span><p><b>Bank SMS reader</b> · Mask account and card numbers when showing transaction SMS.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">📝</span><p><b>Private notes</b> · Hide Aadhaar, PAN and passwords in notes until the user taps to reveal.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🧒</span><p><b>Kids safety</b> · Stop kids sharing their phone number or home address with strangers.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🎮</span><p><b>Game chat</b> · Block phone numbers and social handles in chat with minors.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">📦</span><p><b>Delivery apps</b> · Hide customer phone and address once the order is delivered.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🏥</span><p><b>Health apps</b> · Mask names and IDs in patient notes before they sync to the cloud.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">📨</span><p><b>Feedback forms</b> · Remove personal info from free-text feedback before storing it.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🧑‍💼</span><p><b>Anonymous HR feedback</b> · Remove names and contacts so employee feedback stays anonymous.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">✍️</span><p><b>Smart form autofill</b> · Pull the phone, email and address out of a pasted message to fill a form.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">🔍</span><p><b>Privacy-safe search</b> · Index chats and notes for search without storing personal data.</p></div>
+    <div class="idea"><span class="emo" aria-hidden="true">📊</span><p><b>Clean analytics</b> · Send text events to analytics with every personal detail already masked.</p></div>
   </div>
 </section>
 
