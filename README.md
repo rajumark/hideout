@@ -1,12 +1,12 @@
 # Hideout 🏚️
 
-By Hoverfly. On-device personal information detector for Android. It finds phone numbers, UPI IDs, Aadhaar, PAN,
+By Hoverfly. On-device personal information detector for **Kotlin Multiplatform**: Android, iOS, macOS, JVM desktop, JavaScript and WebAssembly. It finds phone numbers, UPI IDs, Aadhaar, PAN,
 card and bank numbers, emails, names, addresses and more in a message, and hides them before you save, show or send it.
 
 ```kotlin
 import io.github.rajumark.hoverfly.hideout.Hideout
 
-Hideout(context).use { hideout ->
+Hideout().use { hideout ->
     hideout.hide("Call me on 98765 43210, my UPI is raju@okaxis")
     // "Call me on [PHONE], my UPI is [UPI]"
     hideout.hide("Mera naam Pooja Gupta hai, aadhar 4521 8736 1292")
@@ -20,28 +20,33 @@ Hideout(context).use { hideout ->
 - **19 kinds of personal info**, each with exact character offsets and a confidence score.
 - **Leaves ordinary numbers alone.** Prices, times, order IDs, UPI transaction refs, PNRs and cities stay visible.
 - **No dependencies.** Inference is plain Kotlin. There is no ONNX Runtime, TFLite, ML Kit or native code.
-- **Private and offline.** The model ships inside the AAR. There is no network, no permission and no telemetry, so
-  the text you are protecting never leaves the phone.
-- **Small.** 8 MB of int8 weights. minSdk 21. Works from Kotlin and Java.
+- **Private and offline.** The model ships inside the library on every platform. There is no network, no permission and no telemetry, so
+  the text you are protecting never leaves the device.
+- **Small.** 8 MB of int8 weights. Android (minSdk 21), iOS, macOS, JVM desktop, JavaScript and WebAssembly, from Kotlin and Java.
 
 ## Install
 
-Available via [JitPack](https://jitpack.io/#rajumark/hideout):
-
 ```kotlin
-// settings.gradle.kts
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven { url = uri("https://jitpack.io") }
-    }
-}
-
-// build.gradle.kts
+// build.gradle.kts: commonMain, or any platform source set
 dependencies {
-    implementation("com.github.rajumark:hideout:v1.0.0")
+    implementation("io.github.rajumark:hideout:2.0.0")
 }
 ```
+
+It's on Maven Central, so no extra repository is needed. Gradle picks the right artifact for each platform:
+
+| Platform | Artifact |
+|---|---|
+| Android (minSdk 21) | `hideout-android` |
+| JVM desktop (Java 8+) | `hideout-jvm` |
+| iOS device and simulator (arm64) | `hideout-iosarm64`, `hideout-iossimulatorarm64` |
+| macOS (arm64) | `hideout-macosarm64` |
+| JavaScript (browser, Node) | `hideout-js` |
+| WebAssembly (browser, Node) | `hideout-wasm-js` |
+
+The Android-only 1.x releases are on JitPack: `com.github.rajumark:hideout:v1.x`.
+
+Upgrading from 1.x on Android: `Hideout(context)` still compiles in Kotlin (deprecated). The model no longer needs a `Context`, so switch to `Hideout()`. Java code must change `new Hideout(context)` to `new Hideout()`.
 
 ## Screenshots
 
@@ -52,10 +57,16 @@ The sample app on an emulator. Every result is computed on the device.
 | ![English](docs/screenshots/hideout-english.png) | ![Hinglish](docs/screenshots/hideout-hinglish.png) | ![Hindi](docs/screenshots/hideout-hindi.png) | ![Clean](docs/screenshots/hideout-clean.png) |
 | "Call me on [PHONE], my UPI is [UPI]" | "Mera naam [NAME] hai, aadhar [AADHAAR]" | "मेरा नंबर [PHONE] है" | "Order #40512378 will arrive by Friday, costs Rs 24,999" |
 
+The KMP sample on each platform:
+
+| Android | iOS | Desktop | Web (Wasm) |
+|---|---|---|---|
+| ![Android](screenshots/android/1-upi.png) | ![iOS](screenshots/ios/1-upi.png) | ![Desktop](screenshots/desktop/1-upi.png) | ![Web](screenshots/web-wasm/1-upi.png) |
+
 ## Use
 
 ```kotlin
-val hideout = Hideout(context)       // loads the model: do it off the main thread, keep one instance
+val hideout = Hideout()       // loads the model: do it off the main thread, keep one instance
 
 hideout.hide("Account no 50100234567812, IFSC HDFC0001234")
 // "Account no [BANK_ACCOUNT], IFSC [IFSC]"
@@ -74,7 +85,7 @@ hideout.hide("OTP is 482913", replacement = { "*".repeat(it.text.length) })
 
 hideout.contains("thanks, see you on Monday")   // false
 
-hideout.close()                       // frees the model's heap memory
+hideout.close()                       // frees the model's memory
 ```
 
 `find()` and `hide()` are thread-safe. Long text is handled in overlapping windows, so every word gets context on both
@@ -83,14 +94,14 @@ sides. Offsets are UTF-16 indices, the same as `String.substring`.
 With coroutines:
 
 ```kotlin
-val hideout = withContext(Dispatchers.Default) { Hideout(context) }
+val hideout = withContext(Dispatchers.Default) { Hideout() }
 val safe = withContext(Dispatchers.Default) { hideout.hide(message) }
 ```
 
 From Java:
 
 ```java
-try (Hideout hideout = new Hideout(context)) {
+try (Hideout hideout = new Hideout()) {
     String safe = hideout.hide("Call me on 98765 43210");
 }
 ```
@@ -99,7 +110,7 @@ try (Hideout hideout = new Hideout(context)) {
 
 | | |
 |---|---|
-| `Hideout(context)` | Loads the bundled model. `Closeable`. |
+| `Hideout()` | Loads the bundled model. `AutoCloseable`. |
 | `hide(text, types, threshold, replacement)` | The text with each found item replaced, by default `[TYPE]`. |
 | `find(text, types, threshold)` | The found items: `Pii(type, start, end, text, score)`, in text order. |
 | `contains(text, types, threshold)` | `true` if the text has personal info of those types. |
@@ -130,36 +141,48 @@ personal info where nothing was hidden.
 after "at" can be hidden as an address ("starts at 7"); Wi-Fi network names can be taken as passwords; a word next to
 a found item is sometimes swallowed into it ("flat B-1102 …"). Chinese, Japanese and Thai are not supported.
 
-## Sample app
+## Sample apps
 
-`sample/` is a Jetpack Compose (Material 3) demo: type or pick a message and see it hidden, with each found item, its
-type, its score and the time it took.
+`sample/` is a separate Gradle build that uses the **published** library, never the source. It resolves `io.github.rajumark` only from Maven Local, or from Maven Central with `-PhideoutRepo=central`. It has a Compose Multiplatform app for Android, desktop and iOS, and a web page built for both Kotlin/JS and Kotlin/Wasm.
 
 ```bash
-./gradlew :sample:installDebug
+./gradlew :hideout:publishToMavenLocal
+cd sample
+./gradlew :androidApp:installRelease
+./gradlew :desktopApp:run
+./gradlew :webApp:wasmJsBrowserDevelopmentRun     # or :webApp:jsBrowserDevelopmentRun
+open iosApp/iosApp.xcodeproj                       # run the iosApp scheme on a simulator
 ```
 
 ## Project layout
 
 ```
-hideout/              the library (AAR)
-  src/main/assets/hideout/          hideout.bin (int8 weights) · spm_pieces.tsv (tokenizer)
-  src/main/kotlin/io/github/rajumark/hoverfly/hideout/           public API: Hideout, PiiType, Pii
-  src/main/kotlin/io/github/rajumark/hoverfly/hideout/internal/  Text, Featurizer, SentencePiece, Network (the model in plain Kotlin)
-  src/test/           JVM tests: parity with the reference on 197 vectors, API, long text, latency
-  src/androidTest/    the same parity check on a real device (Android ICU)
-sample/               demo app
+hideout/                       the library
+  src/commonMain/              public API (Hideout, Pii, PiiType) and the model in plain Kotlin
+                               (internal/: Text (units + shapes), Featurizer, SentencePiece, Network, UnicodeTables)
+  src/{jvm,android,apple,web}Main/   the only platform code: NFKC normalization, model loading, a thread-safe unit cache
+  src/modelData/               hideout.bin (int8 weights) · spm_pieces.tsv (tokenizer)
+  src/commonTest/              parity with the reference on 197 vectors, API, long text, latency; runs on every target
+sample/                        demo apps using the published artifacts
+scripts/GenTables.java         generates UnicodeTables.kt (character classes) so every platform agrees
+docs/                          website (rajumark.github.io/hideout)
 ```
+
+On JVM and Android the model ships as Java resources in the jar/AAR. Kotlin/Native and the web have no resources, so the build compiles it into the library (`generateEmbeddedModel`).
 
 ## Tests
 
 ```bash
-./gradlew :hideout:testDebugUnitTest                      # JVM: parity + API
-./gradlew :hideout:connectedDebugAndroidTest              # on a connected device/emulator
+./gradlew :hideout:jvmTest
+./gradlew :hideout:testAndroidHostTest
+./gradlew :hideout:connectedAndroidDeviceTest              # on a connected device/emulator
+./gradlew :hideout:iosSimulatorArm64Test
+./gradlew :hideout:macosArm64Test
+./gradlew :hideout:jsNodeTest :hideout:jsBrowserTest
+./gradlew :hideout:wasmJsNodeTest :hideout:wasmJsBrowserTest
 ```
 
-The parity tests require identical units, token ids, labels and hidden text as the reference implementation on all
-197 vectors (JVM and emulator).
+The parity tests require identical units, token, unit and shape ids, the same labels and the same hidden text as the reference implementation on all 197 vectors, on every target.
 
 ## How it works
 
