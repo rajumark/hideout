@@ -1,6 +1,8 @@
 # Hideout 🏚️
 
-By Hoverfly. On-device personal information detector for **Kotlin Multiplatform**: Android, iOS, macOS, JVM desktop, JavaScript and WebAssembly. It finds phone numbers, UPI IDs, Aadhaar, PAN,
+**[Website](https://rajumark.github.io/hideout/)** · **[All Hoverfly models](https://rajumark.github.io/hoverfly/#models)** · [Maven Central](https://central.sonatype.com/artifact/io.github.rajumark/hideout)
+
+By [Hoverfly](https://rajumark.github.io/hoverfly/). On-device personal information detector for **Kotlin Multiplatform**: Android, iOS, macOS, JVM desktop, JavaScript and WebAssembly. It finds phone numbers, UPI IDs, Aadhaar, PAN,
 card and bank numbers, emails, names, addresses and more in a message, and hides them before you save, show or send it.
 
 ```kotlin
@@ -195,6 +197,22 @@ start or inside of one of 19 types, or nothing. Long text is cut into overlappin
 ## Publishing
 
 See [PUBLISHING.md](PUBLISHING.md).
+
+## More Hoverfly models
+
+Hideout is one of eight small on-device models by [Hoverfly](https://rajumark.github.io/hoverfly/), all with the same install, the same free tier and nothing sent to a server.
+
+| Model | What it does | Source |
+|---|---|---|
+| 🙂 [Moji](https://rajumark.github.io/moji/) | Emoji suggestions in 22+ languages | [GitHub](https://github.com/rajumark/moji) |
+| 🗼 [Beacon](https://rajumark.github.io/beacon/) | Language and script detection, Hinglish included | [GitHub](https://github.com/rajumark/beacon) |
+| ✍️ [Comma](https://rajumark.github.io/comma/) | Punctuation and capitals for voice-typed text | [GitHub](https://github.com/rajumark/comma) |
+| 💬 [Comeback](https://rajumark.github.io/comeback/) | Smart replies to tap | [GitHub](https://github.com/rajumark/comeback) |
+| 😊 [Emotion](https://rajumark.github.io/emotion/) | 28 emotions and an overall mood per message | [GitHub](https://github.com/rajumark/emotion) |
+| 🛡️ [Gatekeeper](https://rajumark.github.io/gatekeeper/) | Toxic message detection for Indian chat | [GitHub](https://github.com/rajumark/gatekeeper) |
+| 🖍️ [Chalk](https://rajumark.github.io/chalk/) | Doodle recognition, 345 things from pen strokes | [GitHub](https://github.com/rajumark/chalk) |
+
+See them all on the [Hoverfly website](https://rajumark.github.io/hoverfly/#models).
 
 ## Pricing & license
 
