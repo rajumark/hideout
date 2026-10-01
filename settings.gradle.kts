@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "hideout-kmp"
 include(":hideout")
+include(":demo")
